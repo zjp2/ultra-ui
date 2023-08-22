@@ -3,16 +3,18 @@
     <!-- 表头 -->
     <thead :class="cls.e('thead')">
       <th :class="cls.e('th')" v-for="item in columns">
-        {{ item.name }}
+        {{ item.name
+        }}<span v-if="item.rule?.require" :class="cls.be('require', 'th')"
+          >*</span
+        >
       </th>
 
       <th :class="cls.e('th-action-columns')">操作</th>
     </thead>
     <!-- 表体 -->
     <tbody :class="cls.e('tbody')">
-      <tr v-for="dataItem in modelValue">
+      <tr v-for="(dataItem, dataIndex) in modelValue">
         <td v-for="columnsItem in columns">
-          <!-- {{ columnsItem.key }} -->
           <slot
             v-if="dataItem.edit"
             :name="columnsItem.key"
@@ -22,6 +24,7 @@
             {{ dataItem[columnsItem.key] }}
           </span>
         </td>
+        <!-- 操作栏 -->
         <td :class="cls.e('td-action-data')">
           <slot name="action">
             {{ dataItem.edit }}
@@ -29,19 +32,19 @@
               {{ dataItem.edit ? '保存' : '编辑' }}
             </span>
             <span>插入</span>
-            <span>删除</span>
+            <span @click="onDeleteData(dataIndex)">删除</span>
           </slot>
         </td>
       </tr>
+      <!-- 新增 -->
       <tr>
         <td :colspan="columns.length + 1">
           <tableEditorButton @click="onCreateData">新建</tableEditorButton>
         </td>
       </tr>
     </tbody>
-
+    <!-- 表尾 -->
     <t-foot>
-      <!-- style="border-top: 1px solid #dcdfe6;" -->
       <tr>
         <td colspan="5">表尾合计</td>
       </tr>
@@ -51,33 +54,32 @@
 
 <script lang="ts" setup>
 import { bem } from '@ui/utils'
-import type { TableEditorProps } from './table-editor.type'
+import type { TableEditorProps, TableEditorCreate } from './table-editor.type'
 import tableEditorButton from './table-editor-button.vue'
 
 defineOptions({
   name: 'UTableEditor'
 })
 
-const props = defineProps<TableEditorProps>()
-  // /** 是否禁止编辑 */
-  // disabled: false,
-  // /** modelValue */
-  // modelValue: ,
-  // /** columns */
-  // columns: {},
-  // /** 树 */
-  // tree: { type: Boolean },
-  // /** childrenKey='children' */
-  // childrenKey: { type: String }
+const props = defineProps<TableEditorProps<Record<string, any>>>()
+
+// 旧值
+// const oldModelValue = props.modelValue
 
 /** 点击新增 */
 const onCreateData = async () => {
-  let obj = {
+  let obj: TableEditorCreate = {
     /** 是否可编辑 */
     edit: true
   }
-  console.log(props, 'props')
-  props.modelValue.push(obj)
+
+  props.modelValue?.push(obj)
+}
+
+/** 删除 */
+const onDeleteData = async (index: number) => {
+  console.log(onDeleteData, 'onDeleteData')
+  props.modelValue?.splice(index, 1)
 }
 
 const cls = bem('table-editor')

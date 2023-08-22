@@ -2,18 +2,28 @@
 export interface TableEditorColumn {
   key: string
   name: string
-  // rule?: ValidatorRule
+  rule?: ValidatorRule
+}
+
+/** 表格编辑器校验的属性 */
+export interface ValidatorRule {
+  /** 是否必填 */
+  require?: Boolean,
+  /** 预设校验 可以跟require一起使用，但不能跟match一起用 */
+  default?: 'id' | 'phone',
+  /** 正则 */
+  match?: String
 }
 
 /** 表格编辑组件组件属性 */
 export interface TableEditorProps<T> {
   /** 是否禁止编辑 */
   disabled?: boolean
-  /** modelValue */
+  /** 双向绑定的值 */
   modelValue?: T[]
   /** columns */
   columns: TableEditorColumn[]
-  /** 树 */
+  /** 是否是tree */
   tree?: boolean
   /** childrenKey='children' */
   childrenKey?: string
@@ -35,6 +45,12 @@ export interface TableEditorExposed {
   insert(index: number): void
 
   validate(): Promise<boolean>
+}
+
+/** 新增条目的属性 */
+export interface TableEditorCreate {
+  /** 是否可编辑 */
+  edit: Boolean
 }
 
 /** table-editor-button按钮  */
