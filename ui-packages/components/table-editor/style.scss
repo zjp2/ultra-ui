@@ -8,10 +8,12 @@
   border-collapse: collapse;
   border: 1px solid #dcdfe6;
   overflow-x: scroll;
+
   .header {
     background-color: #f5f7fa;
     border-bottom: 1px solid #dcdfe6;
   }
+
   @include m.e('thead') {
     @extend .header;
   }
@@ -26,20 +28,22 @@
   @include m.e('tbody') {
     width: 100%;
     max-height: 500px;
+
+    tr {
+      min-height: 80px;
+    }
   }
   // color: #f00;
 
   @include m.e('td-action-data') {
     width: 200px;
-    position: sticky;
-    right: 0;
+    position: static;
     background-color: #fff;
   }
 
   @include m.e('th-action-columns') {
     width: 200px;
-    position: sticky;
-    right: 0;
+    position: static;
     background: #fff;
     box-shadow: 10px;
     display: inline-block;

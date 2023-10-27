@@ -1,20 +1,18 @@
 <template>
   <table :class="cls.b">
-    <!-- 表头 -->
-    <thead :class="cls.e('thead')">
-      <th :class="cls.e('th')" v-for="item in columns">
-        {{ item.name
-        }}<span v-if="item.rule?.require" :class="cls.be('require', 'th')"
-          >*</span
-        >
-      </th>
+    <!-- 表头 start -->
+    <table-editor-header :columns="modeColumns"></table-editor-header>
+    <!-- 表头 end -->
 
-      <th :class="cls.e('th-action-columns')">操作</th>
-    </thead>
-    <!-- 表体 -->
+    <!-- 表体 start -->
     <tbody :class="cls.e('tbody')">
-      <tr v-for="(dataItem, dataIndex) in modelValue">
-        <td v-for="columnsItem in columns">
+      <tr
+        :class="cls.e('tr')"
+        v-for="(dataItem, dataIndex) in values"
+        :key="dataIndex"
+      >
+        <!-- 内容 -->
+        <td v-for="(columnsItem, columnsIndex) in columns" :key="columnsIndex">
           <slot
             v-if="dataItem.edit"
             :name="columnsItem.key"
@@ -24,12 +22,13 @@
             {{ dataItem[columnsItem.key] }}
           </span>
         </td>
+
         <!-- 操作栏 -->
         <td :class="cls.e('td-action-data')">
           <slot name="action">
-            {{ dataItem.edit }}
-            <span @click="dataItem.edit = !dataItem.edit">
-              {{ dataItem.edit ? '保存' : '编辑' }}
+            {{ dataItem?.edit }}
+            <span @click="onSave(dataItem)">
+              {{ dataItem?.edit ? '保存' : '编辑' }}
             </span>
             <span>插入</span>
             <span @click="onDeleteData(dataIndex)">删除</span>
@@ -39,50 +38,126 @@
       <!-- 新增 -->
       <tr>
         <td :colspan="columns.length + 1">
-          <tableEditorButton @click="onCreateData">新建</tableEditorButton>
+          <table-editor-button @click="onCreateData">新建</table-editor-button>
         </td>
       </tr>
     </tbody>
-    <!-- 表尾 -->
-    <t-foot>
-      <tr>
-        <td colspan="5">表尾合计</td>
-      </tr>
-    </t-foot>
+    <!-- 表体 end -->
+
+    <!-- 表尾 start -->
+    <table-editor-footer></table-editor-footer>
+    <!-- 表位 end -->
   </table>
 </template>
 
 <script lang="ts" setup>
 import { bem } from '@ui/utils'
-import type { TableEditorProps, TableEditorCreate } from './table-editor.type'
-import tableEditorButton from './table-editor-button.vue'
+import type {
+  TableEditorProps,
+  // TableEditorCreate,
+  TableEditorEmits,
+  TableEditorRowStatus
+} from './table-editor.type'
+
+import tableEditorHeader from './table-editor-header.vue'
+// import { obj } from 'cat-kit'
+import { watch } from 'vue'
+import { obj } from 'cat-kit'
+import TableEditorButton from './table-editor-button.vue'
+import TableEditorFooter from './table-editor-footer.vue'
+import { Key } from 'icon-ultra'
+// import { watch } from 'vue'
 
 defineOptions({
   name: 'UTableEditor'
 })
 
+const cls = bem('table-editor')
+
 const props = defineProps<TableEditorProps<Record<string, any>>>()
 
-// 旧值
-// const oldModelValue = props.modelValue
+const emit = defineEmits<TableEditorEmits>()
+
+/** 表头 */
+let modeColumns = props.columns
+
+/** 和modelValue同步的数组 可以存放modelValue不能存放的状态（编辑，校验） */
+let values: Record<string, any>[] = []
+
+/** 父组件没修改一次值 就同步一次values */
+watch(
+  () => props.modelValue,
+  value => {
+    values = value
+    // emit('update:modelValue', values)
+  },
+  { immediate: true }
+)
+
+/** 保存 */
+const onSave = (dataItem: Record<string, any>) => {
+  dataItem.edit = !dataItem.edit
+
+  validator(dataItem)
+
+  emit('save', obj(dataItem).omit(['edit', 'isValidator']))
+}
+
+/** 校验 */
+const validator = (dataItem: any) => {
+  const { columns } = props as any
+
+  const keys = columns
+    .filter((item: any) => item.rule?.require)
+    .map((k: { key: any }) => k.key)
+
+  keys.forEach((item: any) => {
+    if (
+      dataItem[item] === undefined ||
+      dataItem[item] === null ||
+      dataItem[item] === ''
+    ) {
+      columns.isValidator = true
+      // console.log( columns.isValidator,'123'  dataItem[item])
+    } else {
+      columns.isValidator = false
+    }
+  })
+}
 
 /** 点击新增 */
 const onCreateData = async () => {
-  let obj: TableEditorCreate = {
+  let obj: TableEditorRowStatus = {
     /** 是否可编辑 */
-    edit: true
+    edit: true,
+    /** 是否提示校验 */
+    isValidator: false
   }
 
-  props.modelValue?.push(obj)
+  values?.push(obj)
+
+  // let omitModelValue = values?.map((item: any) => {
+  //   if (Object.keys(obj)) {
+  //     console.log(Object.keys(obj), 'item')
+  //   } else {
+  //     console.log(111)
+  //   }
+
+  // let result = values.map((value: any) => {
+
+  // })
+
+  // console.log(result,'result')
+
+  // })
+
+  // emit('update:modelValue', result)
 }
 
 /** 删除 */
 const onDeleteData = async (index: number) => {
-  console.log(onDeleteData, 'onDeleteData')
   props.modelValue?.splice(index, 1)
 }
-
-const cls = bem('table-editor')
 </script>
 <style lang="scss" scoped>
 td {
@@ -92,19 +167,14 @@ td {
 }
 // m.css-var(color, vars.$color-types)
 
-th {
-  text-align: center;
-  padding: 15px;
-}
-
 table thead tr {
   background-color: #008c8c;
   color: #fff;
 }
 
-table tbody tr:nth-child(odd) {
-  // background-color: #eee;
-}
+// table tbody tr:nth-child(odd) {
+// background-color: #eee;
+// }
 
 table tbody tr:hover {
   background-color: #ccc;
