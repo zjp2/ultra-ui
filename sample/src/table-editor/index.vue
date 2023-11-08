@@ -1,5 +1,5 @@
 <template>
-  <u-table-editor :columns="columns" v-model:modelValue="modelValue" @save="onSave">
+  <u-table-editor :columns="columns" v-model="modelValue" @save="onSave">
     <template #dd="{ row }">
       {{ row }}
       <input v-model="row.dd" />

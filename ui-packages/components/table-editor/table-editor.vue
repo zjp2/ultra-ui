@@ -14,7 +14,7 @@
         <!-- 内容 -->
         <td v-for="(columnsItem, columnsIndex) in columns" :key="columnsIndex">
           <slot
-            v-if="dataItem.edit"
+            v-if="dataItem.obj?.edit"
             :name="columnsItem.key"
             :row="dataItem"
           ></slot>
@@ -26,9 +26,9 @@
         <!-- 操作栏 -->
         <td :class="cls.e('td-action-data')">
           <slot name="action">
-            {{ dataItem?.edit }}
+            {{ dataItem?.obj?.edit }}
             <span @click="onSave(dataItem)">
-              {{ dataItem?.edit ? '保存' : '编辑' }}
+              {{ dataItem?.obj?.edit ? '保存' : '编辑' }}
             </span>
             <span>插入</span>
             <span @click="onDeleteData(dataIndex)">删除</span>
@@ -61,11 +61,10 @@ import type {
 
 import tableEditorHeader from './table-editor-header.vue'
 // import { obj } from 'cat-kit'
-import { watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { obj } from 'cat-kit'
 import TableEditorButton from './table-editor-button.vue'
 import TableEditorFooter from './table-editor-footer.vue'
-import { Key } from 'icon-ultra'
 // import { watch } from 'vue'
 
 defineOptions({
@@ -82,25 +81,27 @@ const emit = defineEmits<TableEditorEmits>()
 let modeColumns = props.columns
 
 /** 和modelValue同步的数组 可以存放modelValue不能存放的状态（编辑，校验） */
-let values: Record<string, any>[] = []
+let values: Record<string, any>[] = reactive([])
 
 /** 父组件没修改一次值 就同步一次values */
 watch(
   () => props.modelValue,
   value => {
     values = value
-    // emit('update:modelValue', values)
+    // console.log('modelValue')
+    // emit('update:modelValue', )
   },
   { immediate: true }
 )
 
 /** 保存 */
 const onSave = (dataItem: Record<string, any>) => {
-  dataItem.edit = !dataItem.edit
+  dataItem.obj.edit = !dataItem.obj?.edit
 
-  validator(dataItem)
+  // validator(dataItem)
 
-  emit('save', obj(dataItem).omit(['edit', 'isValidator']))
+  emit('save', obj(dataItem.obj).omit(['edit', 'isValidator']))
+  emit('update:modelValue', reactive([{ aa: 'xxxx' }]))
 }
 
 /** 校验 */
@@ -118,7 +119,6 @@ const validator = (dataItem: any) => {
       dataItem[item] === ''
     ) {
       columns.isValidator = true
-      // console.log( columns.isValidator,'123'  dataItem[item])
     } else {
       columns.isValidator = false
     }
@@ -134,24 +134,24 @@ const onCreateData = async () => {
     isValidator: false
   }
 
-  values?.push(obj)
+  values?.push({ obj })
 
-  // let omitModelValue = values?.map((item: any) => {
-  //   if (Object.keys(obj)) {
-  //     console.log(Object.keys(obj), 'item')
-  //   } else {
-  //     console.log(111)
+  // let array = [{ edit: true, dd: 'xxx', cc: 'xxx', isValidator: true }]
+
+  // let result = values.filter(item => {
+  //   for (let key in obj) {
+  //     if (obj[key] !== item[key]) {
+  //       return true
+  //     }
   //   }
-
-  // let result = values.map((value: any) => {
-
+  //   return false
   // })
 
-  // console.log(result,'result')
+  // console.log(result)
 
-  // })
+  // let aa = reactive([{ aa: 111 }])
 
-  // emit('update:modelValue', result)
+  // emit('update:modelValue', aa)
 }
 
 /** 删除 */
