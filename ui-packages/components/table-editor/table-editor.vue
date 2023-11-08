@@ -101,7 +101,7 @@ const onSave = (dataItem: Record<string, any>) => {
   // validator(dataItem)
 
   emit('save', obj(dataItem.obj).omit(['edit', 'isValidator']))
-  emit('update:modelValue', reactive([{ aa: 'xxxx' }]))
+  // emit('update:modelValue', reactive([{ aa: 'xxxx' }]))
 }
 
 /** 校验 */
